@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-// Import the types we defined in the HomeScreen
-import { Issue, IssueStatus } from "../app/(drawer)/(tabs)/index";
+import { Issue, IssueStatus } from "@/constants/data";
 
 // --- Helper for Status Color (Unchanged) ---
 const getStatusColor = (status: IssueStatus) => {

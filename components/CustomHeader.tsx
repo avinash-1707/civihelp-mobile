@@ -80,7 +80,7 @@ const CustomHeader = (props: DrawerHeaderProps) => {
 
   const goToProfile = () => {
     // Navigate to the profile screen
-    router.push("/(drawer)/profile");
+    router.push("/(user)/profile");
   };
 
   return (
