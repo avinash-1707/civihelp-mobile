@@ -1,12 +1,19 @@
-import React, { useMemo } from "react";
-import { View, Text, StyleSheet, FlatList, ViewProps } from "react-native";
-// UPDATED IMPORTS:
-import IssueCard from "@/components/IssueCard";
+import React, { useMemo, useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useVolunteer } from "@/context/VolunteerContext";
 import { Issue, DUMMY_ISSUES } from "@/constants/data";
+import VolunteerIssueCard from "@/components/VolunteerIssueCard";
 
-// --- Types & Data are now imported, so DELETE them from here ---
+// 1. IMPORT THE NEW VOLUNTEER CARD (we will create this in the next step)
 
-// This will be the header for our list
+// This is the header for the list (from your original file)
 const ListHeader = ({ pendingCount }: { pendingCount: number }) => (
   <View style={styles.listHeader}>
     <Text style={styles.subtitle}>
@@ -17,17 +24,51 @@ const ListHeader = ({ pendingCount }: { pendingCount: number }) => (
 );
 
 export default function VolunteerHomeScreen() {
-  // Filter for only "Pending" issues
-  const availableIssues = useMemo(() => {
-    // We now import DUMMY_ISSUES
-    return DUMMY_ISSUES.filter((issue) => issue.status === "Pending");
-  }, [DUMMY_ISSUES]);
+  // 2. GET REGISTRATION STATUS AND ROUTER
+  const { isRegistered } = useVolunteer();
+  const router = useRouter();
 
+  // Add a loading state to prevent flash of content
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 3. ADD THE "GATEKEEPER" LOGIC
+  useEffect(() => {
+    // We wait for the context to be ready
+    if (isRegistered === undefined) return;
+
+    if (!isRegistered) {
+      // If not registered, push the modal.
+      // We use 'push' so it appears on top.
+      router.push("/(volunteer)/onboarding-modal");
+      // We can set loading to false, as the modal will cover this screen
+      setIsLoading(false);
+    } else {
+      // If registered, show the dashboard
+      setIsLoading(false);
+    }
+  }, [isRegistered, router]); // Re-run if status or router changes
+
+  // This is your existing logic
+  const availableIssues = useMemo(() => {
+    return DUMMY_ISSUES.filter((issue) => issue.status === "Pending");
+  }, [DUMMY_ISSUES]); // Note: DUMMY_ISSUES is constant, so this only runs once.
+
+  // 4. SHOW A LOADER WHILE CHECKING REGISTRATION
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1565C0" />
+      </View>
+    );
+  }
+
+  // 5. RENDER THE DASHBOARD (only if registered)
   return (
     <View style={styles.container}>
       <FlatList
         data={availableIssues}
-        renderItem={({ item }) => <IssueCard issue={item} />}
+        // 6. USE THE NEW CARD COMPONENT
+        renderItem={({ item }) => <VolunteerIssueCard issue={item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
@@ -43,10 +84,17 @@ export default function VolunteerHomeScreen() {
   );
 }
 
-// ... (Styles are unchanged)
+// Updated styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f0f2f5",
+  },
+  // New style for the loading spinner
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#f0f2f5",
   },
   listHeader: {
